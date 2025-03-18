@@ -1,4 +1,3 @@
-```markdown
 # Weekly Report Checker MCP Server
 
 An MCP (Model Context Protocol) server that checks weekly report submissions in a Google Sheet.

@@ -9,7 +9,6 @@ mcp = FastMCP("Weekly Report Checker")
 
 # Define the name lists
 NAME_LIST = ["陳冠宇", "林柏志", "潘班", "董屹煊", "王宇軒", "許圃瑄", "陳冠言", "黃祈緯", "黃渝凌"]
-OPTIONAL_LIST = ["顏昌毅", "周易賢"]
 
 # Get the path to the service account file
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -31,7 +30,7 @@ def get_report_data() -> Dict[str, Dict]:
         "timestamp": None,
         "content": None,
         "days_ago": None
-    } for name in NAME_LIST + OPTIONAL_LIST}
+    } for name in NAME_LIST}
     
     # Check each row in the sheet
     for i in range(2, 15):  # Assuming data starts from row 2 and goes to row 14
@@ -44,7 +43,7 @@ def get_report_data() -> Dict[str, Dict]:
             item_time = datetime.datetime.strptime(row[0][0], '%m/%d/%Y %H:%M:%S')
             name = row[0][2]  # Assuming name is in column C
             
-            # Skip if the name is not in our lists
+            # Skip if the name is not in our list
             if name not in report_data:
                 continue
                 
@@ -91,10 +90,7 @@ def check_person_report(name: str) -> str:
     if report_data[name]["submitted"]:
         return f"{name} 已於 {report_data[name]['timestamp']} 提交週報（{report_data[name]['days_ago']} 天前）。\n內容摘要：{report_data[name]['content'][:100]}..."
     else:
-        if name in NAME_LIST:
-            return f"{name} 尚未提交本週週報。"
-        else:
-            return f"{name} 尚未提交本週週報，但屬於選擇性提交名單。"
+        return f"{name} 尚未提交本週週報。"
 
 @mcp.tool()
 def get_submission_stats() -> str:
@@ -102,15 +98,11 @@ def get_submission_stats() -> str:
     report_data = get_report_data()
     
     # Calculate statistics
-    required_total = len(NAME_LIST)
-    required_submitted = sum(1 for name in NAME_LIST if report_data[name]["submitted"])
-    optional_total = len(OPTIONAL_LIST)
-    optional_submitted = sum(1 for name in OPTIONAL_LIST if report_data[name]["submitted"])
+    total = len(NAME_LIST)
+    submitted = sum(1 for name in NAME_LIST if report_data[name]["submitted"])
     
     return f"""週報提交統計：
-必須提交：{required_submitted}/{required_total} ({round(required_submitted/required_total*100 if required_total else 0, 1)}%)
-選擇性提交：{optional_submitted}/{optional_total} ({round(optional_submitted/optional_total*100 if optional_total else 0, 1)}%)
-總計：{required_submitted + optional_submitted}/{required_total + optional_total} ({round((required_submitted + optional_submitted)/(required_total + optional_total)*100 if (required_total + optional_total) else 0, 1)}%)
+已提交：{submitted}/{total} ({round(submitted/total*100 if total else 0, 1)}%)
 """
 
 # Resource endpoints
@@ -127,7 +119,7 @@ def get_report_stats() -> str:
 @mcp.resource("weekly-report://all-members")
 def get_all_members() -> str:
     """Get a list of all team members who should submit reports"""
-    return f"需要繳交週報的成員：{', '.join(NAME_LIST)}\n選擇性繳交週報的成員：{', '.join(OPTIONAL_LIST)}"
+    return f"需要繳交週報的成員：{', '.join(NAME_LIST)}"
 
 @mcp.resource("weekly-report://person/{name}")
 def get_person_status(name: str) -> str:
